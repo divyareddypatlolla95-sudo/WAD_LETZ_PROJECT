@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0F172A">
+<title>DreamLog — Sleep & Focus</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<h1>DreamLog</h1>
+<p class="sub">See how your sleep changes how well you study.</p>
+
+<div class="tabs" role="tablist">
+  <button role="tab" id="t-log" aria-selected="true">Log</button>
+  <button role="tab" id="t-insights" aria-selected="false">Insights</button>
+  <button role="tab" id="t-extras" aria-selected="false">Extras</button>
+  <button role="tab" id="t-reportTab" aria-selected="false">Report</button>
+  <button role="tab" id="t-timer" aria-selected="false">Timer</button>
+</div>
+
+<!-- LOG -->
+<section id="log">
+  <div class="panel">
+    <h2>Last night</h2>
+    <div class="ring">
+      <svg width="180" height="180" viewBox="0 0 200 200" aria-hidden="true">
+        <circle cx="100" cy="100" r="88" fill="none" stroke="#27385a" stroke-width="12"/>
+        <circle id="ringFill" cx="100" cy="100" r="88" fill="none" stroke="#a3b0ff" stroke-width="12" stroke-linecap="round" stroke-dasharray="553" stroke-dashoffset="553"/>
+      </svg>
+      <div class="c"><div class="big" id="ringVal">–</div><div class="lbl" id="ringLbl">No sleep logged</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Log your sleep</h2>
+    <form id="sleepForm">
+      <label class="full">Date you woke up<input type="date" id="sDate" required></label>
+      <label>Went to bed<input type="time" id="bed" value="23:30" required></label>
+      <label>Woke up<input type="time" id="wake" value="07:30" required></label>
+      <div class="field full">Sleep quality<div class="stars" id="sStars" role="radiogroup" aria-label="Sleep quality"></div></div>
+      <button class="primary" type="submit">Save sleep</button>
+      <div class="toast" id="sToast" role="status"></div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2>Log your study day</h2>
+    <form id="studyForm">
+      <label class="full">Date<input type="date" id="dDate" required></label>
+      <label>Hours studied<input type="number" id="hrs" min="0" max="16" step="0.5" value="4" required></label>
+      <label>Subjects<input type="text" id="subj" placeholder="Algorithms, Physics" maxlength="60"></label>
+      <label class="full">Focus rating
+        <select id="focus">
+          <option value="5">5 – Deep focus</option>
+          <option value="4">4 – Focused</option>
+          <option value="3" selected>3 – Average</option>
+          <option value="2">2 – Distracted</option>
+          <option value="1">1 – Couldn't concentrate</option>
+        </select>
+      </label>
+      <button class="primary amber" type="submit">Save study day</button>
+      <div class="toast" id="dToast" role="status"></div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <h2>Recent days</h2>
+    <ul class="hist" id="history"></ul>
+  </div>
+</section>
+
+<!-- INSIGHTS -->
+<section id="insights" hidden>
+  <div class="panel">
+    <h2>Sleep vs study focus</h2>
+    <div class="grid2">
+      <div class="metric"><span class="lbl">Correlation (r)</span><b id="rVal">–</b><span id="rLbl" class="lbl"></span></div>
+      <div class="metric"><span class="lbl">Days logged</span><b id="nVal">0</b><span class="lbl">with sleep + focus</span></div>
+    </div>
+    <div id="conf"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Scatter plot and trendline</h2>
+    <div class="chartbox"><canvas id="scatter" aria-label="Scatter plot of sleep hours against focus rating with trendline" role="img"></canvas></div>
+    <p class="lbl" style="margin-top:8px">The orange dot is your latest day.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Sleep debt this week</h2>
+    <div class="grid2">
+      <div class="metric"><span class="lbl">Debt vs 8h baseline</span><b id="debtVal">0h</b></div>
+      <div class="metric"><span class="lbl">Nights counted</span><b id="debtN">0</b></div>
+    </div>
+    <div class="meterbar"><i id="debtBar"></i></div>
+    <p class="lbl" id="debtNote"></p>
+  </div>
+
+  <div class="panel">
+    <h2>Weekly insights</h2>
+    <ul class="insights" id="tips"></ul>
+  </div>
+
+  <div class="panel">
+    <h2>Best bedtime</h2>
+    <label>I need to wake up at<input type="time" id="wakeAt" value="07:00"></label>
+    <div id="bedtimes"></div>
+    <p class="lbl">Sleep runs in 90-minute cycles. These times include about 15 minutes to fall asleep, so you wake between cycles.</p>
+  </div>
+</section>
+
+<!-- EXTRAS -->
+<section id="extras" hidden>
+  <div class="panel noprint">
+    <h2>Caffeine tracker</h2>
+    <form id="cafForm">
+      <label>Drink
+        <select id="cafType">
+          <option value="95|Coffee">Coffee (95 mg)</option>
+          <option value="64|Espresso">Espresso (64 mg)</option>
+          <option value="47|Black tea">Black tea (47 mg)</option>
+          <option value="28|Green tea">Green tea (28 mg)</option>
+          <option value="80|Energy drink">Energy drink (80 mg)</option>
+        </select>
+      </label>
+      <label>Time<input type="time" id="cafTime" required></label>
+      <button class="primary amber" type="submit">Add drink</button>
+    </form>
+    <div class="chartbox" style="height:220px;margin-top:14px"><canvas id="cafChart" role="img" aria-label="Caffeine in your body today compared with bedtime"></canvas></div>
+    <p class="lbl" id="cafNote" style="margin-top:8px"></p>
+    <ul class="hist" id="cafList"></ul>
+  </div>
+
+  <div class="panel noprint">
+    <h2>Exam week sleep preserver</h2>
+    <form id="examForm">
+      <label>Exam date<input type="date" id="exDate" required></label>
+      <label>Study hours needed<input type="number" id="exHrs" min="1" max="300" value="30" required></label>
+      <label class="full">Wake time<input type="time" id="exWake" value="07:00"></label>
+      <button class="primary" type="submit">Build timetable</button>
+    </form>
+    <div id="examOut"></div>
+  </div>
+</section>
+
+<!-- REPORT -->
+<section id="reportTab" hidden>
+  <div class="panel noprint">
+    <h2>Report details</h2>
+    <form id="repForm">
+      <label>Student name<input type="text" id="stName" maxlength="40" placeholder="Your name"></label>
+      <label>Course<input type="text" id="stCourse" maxlength="40" placeholder="B.Tech CSE"></label>
+      <button class="primary" type="submit">Update report</button>
+    </form>
+  </div>
+
+  <div class="panel noprint">
+    <h2>Exam results (optional)</h2>
+    <form id="examResForm">
+      <label>Exam<input type="text" id="erName" maxlength="40" placeholder="Algorithms midterm" required></label>
+      <label>Date<input type="date" id="erDate" required></label>
+      <label class="full">Score (%)<input type="number" id="erScore" min="0" max="100" required></label>
+      <button class="primary amber" type="submit">Add exam result</button>
+    </form>
+  </div>
+
+  <div class="panel" id="report">
+    <h2>Student wellness report</h2>
+    <div id="reportBody"></div>
+  </div>
+  <button class="primary noprint" id="printBtn" type="button" style="width:100%">Print or save as PDF</button>
+</section>
+
+<!-- TIMER -->
+<section id="timer" hidden>
+  <div class="panel timer">
+    <h2>Focus timer</h2>
+    <div class="presets" id="presets">
+      <button data-m="25" aria-pressed="true">25 min</button>
+      <button data-m="50" aria-pressed="false">50 min</button>
+      <button data-m="15" aria-pressed="false">15 min</button>
+    </div>
+    <div class="time" id="time">25:00</div>
+    <div class="meter"><i id="meter"></i></div>
+    <div class="actions"><button class="go" id="start">Start</button><button id="reset">Reset</button></div>
+  </div>
+  <div class="panel">
+    <h2>Today</h2>
+    <div class="stats">
+      <div><b id="sessToday">0</b><span class="lbl">sessions</span></div>
+      <div><b id="minToday">0</b><span class="lbl">minutes focused</span></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
